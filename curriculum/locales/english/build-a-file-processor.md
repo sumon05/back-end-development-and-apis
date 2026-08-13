@@ -117,7 +117,7 @@ assert.isAbove(
   "You should call `fs.readFileSync` in `server.js`",
 );
 assert.match(
-  __i.argText(__calls.at(0).arguments.at(0)),
+  __i.argText(__calls.at(0)?.arguments.at(0)),
   /assets[\s\S]*poem\.txt/,
   "The path passed to `fs.readFileSync` should point to `assets/poem.txt`",
 );
@@ -185,7 +185,8 @@ assert.isAbove(
   0,
   "You should call `fs.readFileSync` in `server.js`",
 );
-const __options = __calls.at(0).arguments.at(1);
+const __options = __calls.at(0)?.arguments.at(1);
+assert.exists(__options, "Expected at lookup to return a value.");
 assert.equal(
   __options?.type,
   "ObjectExpression",
@@ -224,6 +225,17 @@ assert.include(
 );
 ```
 
+You should run `node server.js` to see the console output.
+
+```js
+const __history = await __helpers.getBashHistory();
+assert.match(
+  __history,
+  /node\s+server\.js/,
+  "Call `node server.js` from `build-a-file-processor/`",
+);
+```
+
 ## 4
 
 ### --description--
@@ -254,7 +266,7 @@ assert.isAbove(
   "You should call `fs.readFile` in `server.js`",
 );
 assert.match(
-  __i.argText(__calls.at(0).arguments.at(0)),
+  __i.argText(__calls.at(0)?.arguments.at(0)),
   /assets[\s\S]*poem\.txt/,
   "The first argument to `fs.readFile` should be the path `assets/poem.txt`",
 );
@@ -288,6 +300,17 @@ assert.include(
   stdout,
   "one by one",
   "Running `node server.js` should print the poem - log the data inside the callback",
+);
+```
+
+You should run `node server.js` to see the console output.
+
+```js
+const __history = await __helpers.getBashHistory();
+assert.match(
+  __history,
+  /node\s+server\.js/,
+  "Call `node server.js` from `build-a-file-processor/`",
 );
 ```
 
@@ -364,6 +387,17 @@ assert.include(
 );
 ```
 
+You should run `node server.js` to see the console output.
+
+```js
+const __history = await __helpers.getBashHistory();
+assert.match(
+  __history,
+  /node\s+server\.js/,
+  "Call `node server.js` from `build-a-file-processor/`",
+);
+```
+
 ## 6
 
 ### --description--
@@ -392,24 +426,52 @@ assert.isAbove(
   "You should call `fs.writeFileSync` in `server.js`",
 );
 assert.match(
-  __i.argText(__calls.at(0).arguments.at(0)),
+  __i.argText(__calls.at(0)?.arguments.at(0)),
   /assets[\s\S]*output\.txt/,
   "The first argument to `fs.writeFileSync` should be `assets/output.txt`",
 );
 ```
 
-Running `server.js` should create an `assets/output.txt` file.
+`server.js` should call `fs.writeFileSync` with the string `'Hello, freeCodeCamp!'`.
+
+```js
+const __file = await __helpers.getFile(project.dashedName, "server.js");
+const __i = new __helpers.Inspector(__file);
+const __calls = __i.getCalls("fs.writeFileSync");
+assert.equal(
+  __i.argText(__calls.at(0)?.arguments.at(1)),
+  "Hello, freeCodeCamp!",
+  "The second argument to `fs.writeFileSync` should be 'Hello, freeCodeCamp!'",
+);
+```
+
+Running `server.js` should create an `assets/output.txt` file containing `'Hello, freeCodeCamp!'`.
 
 ```js
 const { join } = await import("path");
-const { existsSync } = await import("fs");
+const { existsSync, readFileSync } = await import("fs");
 await __helpers.getCommandOutput("node server.js", project.dashedName);
-const __exists = existsSync(
-  join(ROOT, project.dashedName, "assets", "output.txt"),
-);
+const __path = join(ROOT, project.dashedName, "assets", "output.txt");
+const __exists = existsSync(__path);
 assert.isTrue(
   __exists,
   "`assets/output.txt` should exist after running `node server.js`",
+);
+assert.equal(
+  readFileSync(__path, "utf-8"),
+  "Hello, freeCodeCamp!",
+  "`assets/output.txt` should contain 'Hello, freeCodeCamp!' after running `node server.js`",
+);
+```
+
+You should run `node server.js` to see the console output.
+
+```js
+const __history = await __helpers.getBashHistory();
+assert.match(
+  __history,
+  /node\s+server\.js/,
+  "Call `node server.js` from `build-a-file-processor/`",
 );
 ```
 
@@ -441,7 +503,7 @@ assert.isAbove(
   "You should call `fs.appendFileSync` in `server.js`",
 );
 assert.match(
-  __i.argText(__calls.at(0).arguments.at(0)),
+  __i.argText(__calls.at(0)?.arguments.at(0)),
   /assets[\s\S]*output\.txt/,
   "The first argument to `fs.appendFileSync` should be `assets/output.txt`",
 );
@@ -461,6 +523,17 @@ assert.isAbove(
   __content.split("\n").filter(Boolean).length,
   1,
   "`assets/output.txt` should contain more than one line after running `node server.js`",
+);
+```
+
+You should run `node server.js` to see the console output.
+
+```js
+const __history = await __helpers.getBashHistory();
+assert.match(
+  __history,
+  /node\s+server\.js/,
+  "Call `node server.js` from `build-a-file-processor/`",
 );
 ```
 
@@ -515,7 +588,7 @@ assert.isAbove(
   "You should call `fs.existsSync` in `server.js`",
 );
 assert.match(
-  __i.argText(__calls.at(0).arguments.at(0)),
+  __i.argText(__calls.at(0)?.arguments.at(0)),
   /assets[\s\S]*output\.txt/,
   "The argument to `fs.existsSync` should be `assets/output.txt`",
 );
@@ -532,6 +605,17 @@ assert.include(
   stdout,
   "true",
   "Running `node server.js` should print `true` - make sure you are logging the result of `fs.existsSync`",
+);
+```
+
+You should run `node server.js` to see the console output.
+
+```js
+const __history = await __helpers.getBashHistory();
+assert.match(
+  __history,
+  /node\s+server\.js/,
+  "Call `node server.js` from `build-a-file-processor/`",
 );
 ```
 
@@ -587,7 +671,7 @@ assert.isAbove(
   "You should call `fs.readdirSync` in `server.js`",
 );
 assert.include(
-  __i.argText(__calls.at(0).arguments.at(0)),
+  __i.argText(__calls.at(0)?.arguments.at(0)),
   "assets",
   "The argument to `fs.readdirSync` should be `'assets'`",
 );
@@ -604,6 +688,17 @@ assert.include(
   stdout,
   "poem.txt",
   "Running `node server.js` should print the contents of the `assets/` directory, which includes `poem.txt`",
+);
+```
+
+You should run `node server.js` to see the console output.
+
+```js
+const __history = await __helpers.getBashHistory();
+assert.match(
+  __history,
+  /node\s+server\.js/,
+  "Call `node server.js` from `build-a-file-processor/`",
 );
 ```
 
@@ -674,6 +769,17 @@ assert.include(
   stdout,
   "<Buffer",
   "Running `node server.js` should print a Buffer",
+);
+```
+
+You should run `node server.js` to see the console output.
+
+```js
+const __history = await __helpers.getBashHistory();
+assert.match(
+  __history,
+  /node\s+server\.js/,
+  "Call `node server.js` from `build-a-file-processor/`",
 );
 ```
 
@@ -771,6 +877,17 @@ assert.match(
 );
 ```
 
+You should run `node server.js` to see the console output.
+
+```js
+const __history = await __helpers.getBashHistory();
+assert.match(
+  __history,
+  /node\s+server\.js/,
+  "Call `node server.js` from `build-a-file-processor/`",
+);
+```
+
 ## 12
 
 ### --description--
@@ -816,6 +933,17 @@ assert.match(
   stdout,
   /ff ff ff ff ff ff ff ff/,
   "Running `node server.js` should print `<Buffer ff ff ff ff ff ff ff ff>`",
+);
+```
+
+You should run `node server.js` to see the console output.
+
+```js
+const __history = await __helpers.getBashHistory();
+assert.match(
+  __history,
+  /node\s+server\.js/,
+  "Call `node server.js` from `build-a-file-processor/`",
 );
 ```
 
@@ -866,6 +994,17 @@ assert.include(
   stdout,
   "freeCodeCamp",
   "Running `node server.js` should print the decoded string `freeCodeCamp`",
+);
+```
+
+You should run `node server.js` to see the console output.
+
+```js
+const __history = await __helpers.getBashHistory();
+assert.match(
+  __history,
+  /node\s+server\.js/,
+  "Call `node server.js` from `build-a-file-processor/`",
 );
 ```
 
@@ -921,6 +1060,17 @@ const __hashLine = stdout
 assert.isDefined(
   __hashLine,
   "Running `node server.js` should print a 64-character SHA-256 hex digest",
+);
+```
+
+You should run `node server.js` to see the console output.
+
+```js
+const __history = await __helpers.getBashHistory();
+assert.match(
+  __history,
+  /node\s+server\.js/,
+  "Call `node server.js` from `build-a-file-processor/`",
 );
 ```
 
@@ -1005,6 +1155,17 @@ assert.isDefined(
 );
 ```
 
+You should run `node server.js` to see the console output.
+
+```js
+const __history = await __helpers.getBashHistory();
+assert.match(
+  __history,
+  /node\s+server\.js/,
+  "Call `node server.js` from `build-a-file-processor/`",
+);
+```
+
 ## 16
 
 ### --description--
@@ -1046,6 +1207,17 @@ assert.match(
   stdout,
   __uuidPattern,
   "Running `node server.js` should print a valid UUID v4",
+);
+```
+
+You should run `node server.js` to see the console output.
+
+```js
+const __history = await __helpers.getBashHistory();
+assert.match(
+  __history,
+  /node\s+server\.js/,
+  "Call `node server.js` from `build-a-file-processor/`",
 );
 ```
 
@@ -1104,6 +1276,17 @@ assert.isAtLeast(
 assert.isTrue(
   __lines.every((l) => l.trim().length > 0),
   "Each logged value should be a non-empty string",
+);
+```
+
+You should run `node server.js` to see the console output.
+
+```js
+const __history = await __helpers.getBashHistory();
+assert.match(
+  __history,
+  /node\s+server\.js/,
+  "Call `node server.js` from `build-a-file-processor/`",
 );
 ```
 
@@ -1194,6 +1377,17 @@ assert.isAtLeast(
 );
 ```
 
+You should run `node server.js` to see the console output.
+
+```js
+const __history = await __helpers.getBashHistory();
+assert.match(
+  __history,
+  /node\s+server\.js/,
+  "Call `node server.js` from `build-a-file-processor/`",
+);
+```
+
 ## 19
 
 ### --description--
@@ -1237,6 +1431,17 @@ assert.isDefined(
   "Running `node server.js` should print the CPU count from `os.cpus().length`",
 );
 assert.isAbove(__expectedCpus, 0, "The CPU count should be greater than 0");
+```
+
+You should run `node server.js` to see the console output.
+
+```js
+const __history = await __helpers.getBashHistory();
+assert.match(
+  __history,
+  /node\s+server\.js/,
+  "Call `node server.js` from `build-a-file-processor/`",
+);
 ```
 
 ## 20
@@ -1303,6 +1508,17 @@ assert.match(
   stdout.trim(),
   /assets.poem\.txt/,
   "Running `node server.js` should print a path containing `assets/poem.txt`",
+);
+```
+
+You should run `node server.js` to see the console output.
+
+```js
+const __history = await __helpers.getBashHistory();
+assert.match(
+  __history,
+  /node\s+server\.js/,
+  "Call `node server.js` from `build-a-file-processor/`",
 );
 ```
 
@@ -1408,6 +1624,17 @@ assert.include(
 );
 ```
 
+You should run `node server.js` to see the console output.
+
+```js
+const __history = await __helpers.getBashHistory();
+assert.match(
+  __history,
+  /node\s+server\.js/,
+  "Call `node server.js` from `build-a-file-processor/`",
+);
+```
+
 ## 22
 
 ### --description--
@@ -1495,6 +1722,17 @@ assert.isTrue(
 );
 ```
 
+You should run `node server.js` to see the console output.
+
+```js
+const __history = await __helpers.getBashHistory();
+assert.match(
+  __history,
+  /node\s+server\.js/,
+  "Call `node server.js` from `build-a-file-processor/`",
+);
+```
+
 ## 23
 
 ### --description--
@@ -1554,6 +1792,17 @@ assert.include(
 );
 ```
 
+You should run `node server.js` to see the console output.
+
+```js
+const __history = await __helpers.getBashHistory();
+assert.match(
+  __history,
+  /node\s+server\.js/,
+  "Call `node server.js` from `build-a-file-processor/`",
+);
+```
+
 ## 24
 
 ### --description--
@@ -1600,6 +1849,17 @@ assert.match(
   stdout,
   /v\d+\.\d+\.\d+/,
   "Running `node server.js` should print the Node.js version (e.g. `v20.0.0`)",
+);
+```
+
+You should run `node server.js` to see the console output.
+
+```js
+const __history = await __helpers.getBashHistory();
+assert.match(
+  __history,
+  /node\s+server\.js/,
+  "Call `node server.js` from `build-a-file-processor/`",
 );
 ```
 
@@ -1703,6 +1963,17 @@ assert.include(
 );
 ```
 
+You should run `node server.js` to see the console output.
+
+```js
+const __history = await __helpers.getBashHistory();
+assert.match(
+  __history,
+  /node\s+server\.js/,
+  "Call `node server.js` from `build-a-file-processor/`",
+);
+```
+
 ## 26
 
 ### --description--
@@ -1757,6 +2028,17 @@ assert.include(
 );
 ```
 
+You should run `node server.js` to see the console output.
+
+```js
+const __history = await __helpers.getBashHistory();
+assert.match(
+  __history,
+  /node\s+server\.js/,
+  "Call `node server.js` from `build-a-file-processor/`",
+);
+```
+
 ## 27
 
 ### --description--
@@ -1794,7 +2076,7 @@ assert.isAbove(
   "You should call `fs.createReadStream` in `server.js`",
 );
 assert.match(
-  __i.argText(__calls.at(0).arguments.at(0)),
+  __i.argText(__calls.at(0)?.arguments.at(0)),
   /assets[\s\S]*poem\.txt/,
   "The path passed to `fs.createReadStream` should be `assets/poem.txt`",
 );
@@ -1831,6 +2113,17 @@ assert.include(
   stdout,
   "one by one",
   "Running `node server.js` should print the poem from the readable stream",
+);
+```
+
+You should run `node server.js` to see the console output.
+
+```js
+const __history = await __helpers.getBashHistory();
+assert.match(
+  __history,
+  /node\s+server\.js/,
+  "Call `node server.js` from `build-a-file-processor/`",
 );
 ```
 
@@ -1928,7 +2221,7 @@ assert.isAbove(
   "You should call `fs.createWriteStream` in `server.js`",
 );
 assert.match(
-  __i.argText(__calls.at(0).arguments.at(0)),
+  __i.argText(__calls.at(0)?.arguments.at(0)),
   /assets[\s\S]*stream-output\.txt/,
   "The path passed to `fs.createWriteStream` should be `assets/stream-output.txt`",
 );
@@ -1946,6 +2239,17 @@ const __exists = existsSync(
 assert.isTrue(
   __exists,
   "`assets/stream-output.txt` should exist after running `node server.js`",
+);
+```
+
+You should run `node server.js` to see the console output.
+
+```js
+const __history = await __helpers.getBashHistory();
+assert.match(
+  __history,
+  /node\s+server\.js/,
+  "Call `node server.js` from `build-a-file-processor/`",
 );
 ```
 
@@ -1993,6 +2297,17 @@ assert.include(
   __content,
   "one by one",
   "`assets/stream-output.txt` should contain the poem after piping",
+);
+```
+
+You should run `node server.js` to see the console output.
+
+```js
+const __history = await __helpers.getBashHistory();
+assert.match(
+  __history,
+  /node\s+server\.js/,
+  "Call `node server.js` from `build-a-file-processor/`",
 );
 ```
 

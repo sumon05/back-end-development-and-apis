@@ -3,15 +3,36 @@ import { join } from "path";
 import { readFile, readdir, constants, access } from "fs/promises";
 import { createConnection } from "net";
 import { logover } from "@freecodecamp/freecodecamp-os/.freeCodeCamp/tooling/logger.js";
+import { AssertionError } from "chai";
 
 import { Babeliser } from "babeliser";
+
+function curriculumAssertion(message, error) {
+  const details = {};
+  if (error && typeof error === "object") {
+    for (const key of Object.getOwnPropertyNames(error)) {
+      if (typeof error[key] !== "function") details[key] = error[key];
+    }
+  }
+  throw new AssertionError(message, {
+    ...details,
+    actual: error?.message,
+    cause: error,
+  });
+}
 
 export { Babeliser };
 
 export async function getDir(path) {
   const rootPath = join(ROOT, path);
-  const dir = await readdir(rootPath);
-  return dir;
+  try {
+    return await readdir(rootPath);
+  } catch (error) {
+    curriculumAssertion(
+      `Expected directory '${path}' to exist and be readable.`,
+      error,
+    );
+  }
 }
 
 export async function fileExists(...path) {
@@ -26,8 +47,38 @@ export async function fileExists(...path) {
 
 export async function getFile(projectDashedName, pathRelativeToProject) {
   const rootPath = join(ROOT, projectDashedName, pathRelativeToProject);
-  const file = await readFile(rootPath, "utf-8");
-  return file;
+  try {
+    return await readFile(rootPath, "utf-8");
+  } catch (error) {
+    curriculumAssertion(
+      `Expected '${join(projectDashedName, pathRelativeToProject)}' to exist and be readable.`,
+      error,
+    );
+  }
+}
+
+export async function getCommandOutput(command, path = "") {
+  const { exec } = await import("node:child_process");
+  const { promisify } = await import("node:util");
+  try {
+    return await promisify(exec)(command, {
+      cwd: join(ROOT, path),
+      shell: "/bin/bash",
+    });
+  } catch (error) {
+    curriculumAssertion(
+      `Expected '${command}' to run successfully${path ? ` in '${path}'` : ""}.`,
+      error,
+    );
+  }
+}
+
+export async function importSansCache(path) {
+  try {
+    return await import(`${join(ROOT, path)}?update=${Date.now()}`);
+  } catch (error) {
+    curriculumAssertion(`Expected module '${path}' to load successfully.`, error);
+  }
 }
 
 export function isServerListening(port) {
@@ -160,6 +211,11 @@ export async function awaitExecution(
  * @returns {string[]} array of arguments where the first element is the command
  */
 export function parseCli(str) {
+  if (typeof str !== "string" || !str.trim()) {
+    curriculumAssertion(
+      "Expected a terminal command. Run the command requested by this lesson.",
+    );
+  }
   const args = [];
   const [command, ...rest] = str.split(" ");
   const iter = rest[Symbol.iterator]();
@@ -405,21 +461,52 @@ export class Tower {
           }
 
           const identifier = variableDeclarator.id;
-          if (!is("Identifier", identifier)) {
-            return false;
+          if (is("Identifier", identifier)) {
+            return identifier.name === name;
           }
 
-          return identifier.name === name;
+          if (is("ObjectPattern", identifier)) {
+            if (generate(identifier, { compact: true }).code === name) {
+              return true;
+            }
+
+            return identifier.properties.some(
+              (p) => is("Identifier", p.key) && p.key.name === name,
+            );
+          }
+
+          return false;
+        }
+      }
+
+      if (type === "VariableDeclaration" && is("ImportDeclaration", node)) {
+        const matchesSpecifier = node.specifiers.some((s) => {
+          if (
+            is("ImportDefaultSpecifier", s) ||
+            is("ImportNamespaceSpecifier", s) ||
+            is("ImportSpecifier", s)
+          ) {
+            return s.local.name === name;
+          }
+
+          return false;
+        });
+        if (matchesSpecifier) {
+          return true;
+        }
+
+        if (node.specifiers.every((s) => is("ImportSpecifier", s))) {
+          const compact = `{${node.specifiers
+            .map((s) => s.local.name)
+            .join(",")}}`;
+          return compact === name;
         }
       }
 
       return false;
     });
-    if (!ast) {
-      throw new Error(`No AST found with name ${name}`);
-    }
 
-    return new Tower(ast);
+    return ast ? new Tower(ast) : undefined;
   }
 
   getFunction(name) {
@@ -428,6 +515,43 @@ export class Tower {
 
   getVariable(name) {
     return this.getType("VariableDeclaration", name);
+  }
+
+  getIfStatements() {
+    const body = this.extractBody(this.ast);
+    return body.filter((node) => is("IfStatement", node));
+  }
+
+  /**
+   * The property of an object-literal variable whose key is `key`
+   *
+   * ```js
+   * const mimeTypes = { ".html": "text/html" };
+   * getProperty(".html"); // `".html": "text/html"`
+   * ```
+   */
+  getProperty(key) {
+    const init =
+      this.ast.type === "VariableDeclaration"
+        ? this.ast.declarations[0]?.init
+        : this.ast;
+    if (!is("ObjectExpression", init)) {
+      return undefined;
+    }
+
+    const property = init.properties.find((p) => {
+      if (is("StringLiteral", p.key)) {
+        return p.key.value === key;
+      }
+
+      if (is("Identifier", p.key)) {
+        return p.key.name === key;
+      }
+
+      return false;
+    });
+
+    return property ? new Tower(property) : undefined;
   }
 
   getCalls(callSite) {
@@ -485,6 +609,8 @@ export class Tower {
         }
 
         throw new Error(`Unimplemented for ${ast.type}`);
+      case "BlockStatement":
+        return ast.body;
       default:
         throw new Error(`Unimplemented for ${ast.type}`);
     }
